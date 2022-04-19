@@ -15,12 +15,10 @@ from Preprocessor import DataPreprocessor
 from models.LSTMModel import LSTM
 
 class TessDataset(Dataset):
-    def __init__(self):
-        preprocessor = DataPreprocessor()
-        x_train, _, _, y_train, _, _ = preprocessor.mfcc_data_prep("../data")
-        self.x = x_train
-        self.y = y_train
-        self.n_samples = x_train.shape[0]
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.n_samples = x.shape[0]
 
     def __len__(self):
         return self.n_samples
@@ -35,19 +33,21 @@ def get_accuracy(out, actual_labels):
     return accuracy
 
 def train_lstm():
+  preprocessor = DataPreprocessor()
+  x_train, _, x_test, y_train, _, y_test = preprocessor.mfcc_data_prep("../data")
+  train_loader = DataLoader(TessDataset(x_train, y_train), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
+  test_loader = DataLoader(TessDataset(x_test, y_test), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
   lstm_model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE)
   print('lstm_model: ', lstm_model)
-  train_loader = DataLoader(TessDataset(), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
-  train_network(lstm_model, train_loader)
+  train_network(lstm_model, train_loader, test_loader)
   
 
-def train_network(model, train_loader, learning_rate=0.01):
+def train_network(model, train_loader, test_loader, learning_rate=0.01):
   criterion = nn.CrossEntropyLoss()
   optimizer = optim.Adam(model.parameters(), lr=learning_rate)
   print('Training started...')
   # Train the data multiple times
   for epoch in range(Constants.LSTM_EPOCHS):
-    print("Epoch: {}".format(epoch))
     train_loss = 0
     train_acc = 0
     model.train()
@@ -64,7 +64,21 @@ def train_network(model, train_loader, learning_rate=0.01):
       train_loss += loss.item()
       train_acc += get_accuracy(out, labels)
     print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch+1, Constants.LSTM_EPOCHS, train_loss/batch_no, train_acc/batch_no))
-    
+  print('Testing Started...')
+  test_acc = 0
+  model.eval()
+  batch_no = 0
+
+  for batch in test_loader:
+    batch_no+=1
+    mfccs, labels = batch
+    mfccs = torch.squeeze(mfccs)
+    out = model(mfccs)
+    test_acc += get_accuracy(out, labels)
+      
+  # Print Final Test Accuracy
+  print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no) )
+  torch.save(model.state_dict(), "LSTMModel.pt")
 
 if __name__ == '__main__':
     train_lstm()
