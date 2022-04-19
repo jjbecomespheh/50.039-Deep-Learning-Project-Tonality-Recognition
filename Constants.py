@@ -8,8 +8,9 @@ TEST_SET_SIZE = 0.5 # 50% of the remaining data after extracting training set --
 RANDOM_STATE = 20 # For shuffle in train_test_split. Need this to stratify the split.
 
 # For LSTM Model
-LSTM_BATCH_SIZE = 10
+LSTM_BATCH_SIZE = 4
 LSTM_INPUT_SIZE = 40
 LSTM_HIDDEN_SIZE = 100
 LSTM_LAYER_SIZE = 2
 LSTM_OUTPUT_SIZE = 7
+LSTM_EPOCHS = 10

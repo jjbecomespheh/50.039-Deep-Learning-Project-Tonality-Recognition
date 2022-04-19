@@ -25,7 +25,11 @@ class DataPreprocessor:
     def extract_mfcc(self, file_path): # MFCC = Mel-frequency Cepstral Coefficients 
         audio, sampling_rate = librosa.load(path = file_path, sr = Constants.SAMPLING_RATE, mono = True)
         mfcc = librosa.feature.mfcc(y=audio, sr=sampling_rate, n_mfcc=Constants.NO_OF_MFCCs)
-        return np.mean(mfcc, axis=1) # array of shape (no of MFCCs, 1)
+        mean = np.mean(mfcc, axis=1)
+        out_shape = (Constants.NO_OF_MFCCs, Constants.NO_OF_MFCCs)
+        out = np.zeros(out_shape, dtype=np.float32)
+        out[:, 0] = mean
+        return out # array of shape (no of MFCCs, no of MFCCs)
 
     def extract_spectrogram(self, file_path):
         sampling_rate, samples = wavfile.read(file_path)
@@ -54,6 +58,7 @@ class DataPreprocessor:
 
     def mfcc_data_prep(self, data_dir): # combines the above functions for 
         file_paths, labels = self.get_file_paths_and_labels(data_dir)
+        file_paths, labels = file_paths[:6], labels[:6]
         mfccs = self.extract_mfccs(file_paths)
         ohe_classes, _ = self.convert_labels_to_OHE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, ohe_classes)
