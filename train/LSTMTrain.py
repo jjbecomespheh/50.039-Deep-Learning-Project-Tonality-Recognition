@@ -28,6 +28,12 @@ class TessDataset(Dataset):
     def __getitem__(self, index):
         return self.x[index], self.y[index]
 
+def get_accuracy(out, actual_labels):
+    predictions = out.max(dim=1)[1]
+    correct = (predictions == actual_labels).sum().item()
+    accuracy = correct/Constants.LSTM_BATCH_SIZE
+    return accuracy
+
 def train_lstm():
   lstm_model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE)
   print('lstm_model: ', lstm_model)
@@ -51,15 +57,14 @@ def train_network(model, train_loader, learning_rate=0.01):
       mfccs, labels = batch
       mfccs = torch.squeeze(mfccs)
       out = model(mfccs)
-      print(out)
       optimizer.zero_grad()
       loss = criterion(out, labels)
       loss.backward()
       optimizer.step()
       train_loss += loss.item()
-    print('TRAIN | Epoch: {}/{} | Loss: {:.2f}'.format(epoch+1, Constants.LSTM_EPOCHS, train_loss/batch_no))
+      train_acc += get_accuracy(out, labels)
+    print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch+1, Constants.LSTM_EPOCHS, train_loss/batch_no, train_acc/batch_no))
     
-
 
 if __name__ == '__main__':
     train_lstm()

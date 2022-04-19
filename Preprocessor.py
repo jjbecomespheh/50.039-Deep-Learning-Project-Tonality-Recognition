@@ -4,7 +4,7 @@ import numpy as np
 import librosa
 from scipy import signal
 from scipy.io import wavfile
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
@@ -51,6 +51,15 @@ class DataPreprocessor:
         classes = one_hot_encoder.categories_ [0]
         return onehot_encoded, classes # onehot_encoded --> array of shape (no of audio files, no of classes)
 
+    def convert_labels_to_LE(self, labels):
+        data = np.array(labels).reshape(-1, 1)
+        label_encoder = LabelEncoder()
+        label_encoded = label_encoder.fit_transform(data)
+        classes = label_encoder.classes_
+        print(classes)
+        return label_encoded, classes
+
+
     def train_val_test_split(self, x, y): # x, y --> arrays of same shape
         x_train, x_rem, y_train, y_rem = train_test_split(x, y, train_size = Constants.TRAIN_SET_SIZE, random_state= Constants.RANDOM_STATE, stratify=y)
         x_val, x_test, y_val, y_test = train_test_split(x_rem, y_rem, test_size = Constants.TEST_SET_SIZE, random_state= Constants.RANDOM_STATE, stratify=y_rem)
@@ -60,6 +69,6 @@ class DataPreprocessor:
         file_paths, labels = self.get_file_paths_and_labels(data_dir)
         file_paths, labels = file_paths[:6], labels[:6]
         mfccs = self.extract_mfccs(file_paths)
-        ohe_classes, _ = self.convert_labels_to_OHE(labels)
+        ohe_classes, _ = self.convert_labels_to_LE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, ohe_classes)
         return x_train, x_val, x_test, y_train, y_val, y_test
