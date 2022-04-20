@@ -77,7 +77,7 @@ def train_network(model, train_loader, test_loader, learning_rate=0.01):
       
   # Print Final Test Accuracy
   print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no) )
-  torch.save(model.state_dict(), "LSTMModel.pt")
+  torch.save(model.state_dict(), "GRUModel.pt")
 
 if __name__ == '__main__':
     train()
