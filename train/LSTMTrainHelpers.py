@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import Constants
 import math
+import numpy as np
 
 def get_accuracy(out, actual_labels):
     predictions = out.max(dim=1)[1]
@@ -16,7 +17,7 @@ def get_accuracy(out, actual_labels):
     accuracy = correct/Constants.LSTM_BATCH_SIZE
     return accuracy
 
-def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion):
+def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion, tb):
     print('Training started...')
     last_epoch_val_loss, trigger_count = math.inf, 0
     for epoch in range(Constants.LSTM_EPOCHS):
@@ -26,6 +27,7 @@ def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion):
             batch_no += 1
             mfccs, labels = batch
             mfccs = torch.squeeze(mfccs)
+            if epoch == 0 and batch_no == 0: tb.add_graph(model, mfccs)
             out = model(mfccs)
             optimizer.zero_grad()
             loss = criterion(out, labels)
@@ -33,17 +35,26 @@ def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion):
             optimizer.step()
             train_loss += loss.item()
             train_acc += get_accuracy(out, labels)
-        print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, Constants.LSTM_EPOCHS, train_loss/batch_no, train_acc/batch_no))
-        current_epoch_val_loss = lstm_validation_phase(model, val_loader, criterion)
+
+        # Start of Validation check. 
+        current_epoch_train_loss, current_epoch_train_acc = train_loss/batch_no, train_acc/batch_no
+        print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, Constants.LSTM_EPOCHS, current_epoch_train_loss, current_epoch_train_acc ))
+        current_epoch_val_loss, current_epoch_val_acc = lstm_validation_phase(model, val_loader, criterion)
         if current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
-            if trigger_count >= Constants.LSTM_ES_PATIENCE: return
+            print(f"VALIDATION | Epoch {epoch + 1}/{Constants.LSTM_EPOCHS} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")
+            if trigger_count >= Constants.LSTM_ES_PATIENCE: 
+                print(f"VALIDATION | Epoch {epoch + 1}/{Constants.LSTM_EPOCHS} | Early Stopping Here")
+                return
         else: trigger_count = 0
         last_epoch_val_loss = current_epoch_val_loss
 
+        lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_val_loss, current_epoch_train_acc, current_epoch_val_acc)
+
 def lstm_validation_phase(model, val_loader, criterion):
-    val_loss, batch_no = 0, 0
+    val_loss, batch_no, val_acc = 0, 0, 0
     model.eval()
+
     for batch in val_loader:
         batch_no += 1
         mfccs, labels = batch
@@ -51,7 +62,9 @@ def lstm_validation_phase(model, val_loader, criterion):
         out = model(mfccs)
         loss = criterion(out, labels)
         val_loss += loss.item()
-    return val_loss / batch_no
+        val_acc += get_accuracy(out, labels)
+
+    return val_loss / batch_no, val_acc / batch_no
         
 def lstm_testing_phase(model, test_loader, model_out_path):
     print('Testing Started...')
@@ -88,3 +101,12 @@ def gen_confusion_matrix(model, test_loader, cf_path):
     plt.title('Confusion Matrix: LSTM', fontsize=15)
     plt.savefig(cf_path)
     print('Confusion Matrix stored in ', cf_path)
+
+def lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_val_loss, current_epoch_train_acc, current_epoch_val_acc):
+    tb.add_scalar("Training Loss", current_epoch_train_loss, epoch)
+    tb.add_scalar("Training Accuracy", current_epoch_train_acc, epoch)
+    tb.add_scalar("Validation Loss", current_epoch_val_loss, epoch)
+    tb.add_scalar("Validation Accuracy", current_epoch_val_acc, epoch)
+    for name, weight in model.named_parameters():
+        tb.add_histogram(name, weight, epoch)
+        tb.add_histogram(f"{name}.grad", weight.grad, epoch)
