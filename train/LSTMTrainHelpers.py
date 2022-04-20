@@ -8,6 +8,7 @@ import sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
 import Constants
+import math
 
 def get_accuracy(out, actual_labels):
     predictions = out.max(dim=1)[1]
@@ -15,8 +16,9 @@ def get_accuracy(out, actual_labels):
     accuracy = correct/Constants.LSTM_BATCH_SIZE
     return accuracy
 
-def lstm_training_phase(model, train_loader, optimizer, criterion):
+def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion):
     print('Training started...')
+    last_epoch_val_loss, trigger_count = math.inf, 0
     for epoch in range(Constants.LSTM_EPOCHS):
         train_loss, train_acc, batch_no = 0, 0, 0
         model.train()
@@ -32,7 +34,25 @@ def lstm_training_phase(model, train_loader, optimizer, criterion):
             train_loss += loss.item()
             train_acc += get_accuracy(out, labels)
         print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, Constants.LSTM_EPOCHS, train_loss/batch_no, train_acc/batch_no))
+        current_epoch_val_loss = lstm_validation_phase(model, val_loader, criterion)
+        if current_epoch_val_loss > last_epoch_val_loss: 
+            trigger_count += 1
+            if trigger_count >= Constants.LSTM_ES_PATIENCE: return
+        else: trigger_count = 0
+        last_epoch_val_loss = current_epoch_val_loss
 
+def lstm_validation_phase(model, val_loader, criterion):
+    val_loss, batch_no = 0, 0
+    model.eval()
+    for batch in val_loader:
+        batch_no += 1
+        mfccs, labels = batch
+        mfccs = torch.squeeze(mfccs)
+        out = model(mfccs)
+        loss = criterion(out, labels)
+        val_loss += loss.item()
+    return val_loss / batch_no
+        
 def lstm_testing_phase(model, test_loader, model_out_path):
     print('Testing Started...')
     test_acc, batch_no = 0, 0
