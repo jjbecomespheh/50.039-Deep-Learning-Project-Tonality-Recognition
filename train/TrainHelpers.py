@@ -1,10 +1,10 @@
-import torch
-import Constants
 import sys
 from os.path import dirname, abspath
 parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
+import torch
+import Constants
 
 def get_accuracy(out, actual_labels):
     predictions = out.max(dim=1)[1]

@@ -1,17 +1,15 @@
-from TrainHelpers import lstm_training_phase, lstm_testing_phase
-from models.LSTMModel import LSTM
-from Preprocessor import DataPreprocessor
-from torch.utils.data import Dataset, DataLoader
-import torch.optim as optim
-import torch.nn as nn
-import Constants
 import sys
 from os.path import dirname, abspath
-
-from train.TrainHelpers import lstm_testing_phase
 parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
+import Constants
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from Preprocessor import DataPreprocessor
+from models.LSTMModel import LSTM
+from TrainHelpers import lstm_training_phase, lstm_testing_phase
 
 class TessDataset(Dataset):
     def __init__(self, x, y):
