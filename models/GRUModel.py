@@ -18,7 +18,7 @@ class GRU(nn.Module):
             self.layer_size, 
             batch_first=True, 
             bidirectional=bidirectional,
-            dropout = self.dropout
+            dropout=self.dropout
         )
         if bidirectional:
             # If bidirectional, we have 2 more layers
@@ -29,10 +29,8 @@ class GRU(nn.Module):
     def forward(self, input):
         # Set initial states
         if self.bidirectional:
-            hidden_state = torch.zeros(
-                self.layer_size*2, input.size(0), self.hidden_size)  # Hidden state
-            cell_state = torch.zeros(
-                self.layer_size*2, input.size(0), self.hidden_size)  # Cell state
+            hidden_state = torch.zeros(self.layer_size*2, input.size(0), self.hidden_size)  # Hidden state
+            cell_state = torch.zeros(self.layer_size*2, input.size(0), self.hidden_size)  # Cell state
         else:
             hidden_state = torch.zeros(self.layer_size, input.size(0), self.hidden_size)  # Hidden state
             cell_state = torch.zeros(self.layer_size, input.size(0), self.hidden_size)  # Cell state
