@@ -4,6 +4,9 @@ parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
 import torch
+import sklearn
+import matplotlib.pyplot as plt
+import seaborn as sns
 import Constants
 
 def get_accuracy(out, actual_labels):
@@ -44,3 +47,23 @@ def lstm_testing_phase(model, test_loader, model_out_path):
 
     print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no))
     torch.save(model.state_dict(), model_out_path)
+
+def gen_confusion_matrix(model, test_loader):
+    print('Generating Confusion Matrix...')
+    torch.no_grad()
+    model.eval()
+    preds, actuals = [], []
+
+    for batch in test_loader:
+        batch_no += 1
+        mfccs, labels = batch
+        mfccs = torch.squeeze(mfccs)
+        for (mfcc, label) in zip(mfccs, labels):
+            out = model(mfcc)
+            prediction = torch.max(out, dim=1)[1].item()
+            preds.append(prediction)
+            actuals.append(label)
+    cf = sklearn.metrics.confusion_matrix(preds, actuals)
+    plt.figure(figsize=(16, 5))
+    sns.heatmap(cf, cmap='icefire', annot=True, linewidths=0.1, fmt = ',')
+    plt.title('Confusion Matrix: LSTM', fontsize=15)
