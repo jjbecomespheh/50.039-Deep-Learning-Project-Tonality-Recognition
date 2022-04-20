@@ -34,7 +34,7 @@ def train_lstm(model_output_path, cf_path):
     train_loader = DataLoader(TessDataset(x_train, y_train), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(TessDataset(x_test, y_test), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TessDataset(x_val, y_val), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
-    lstm_model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE)
+    lstm_model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE, Constants.LSTM_DROPOUT)
     tb = SummaryWriter()
     print('lstm_model: ', lstm_model)
     criterion = nn.CrossEntropyLoss()
@@ -45,4 +45,4 @@ def train_lstm(model_output_path, cf_path):
     tb.close()
 
 if __name__ == '__main__':
-    train_lstm("./weights/LSTMModel.pt", "./cf/LSTMModel.png")
+    train_lstm("./weights/LSTMModel_ESDropout_BiDir.pt", "./cf/LSTMModel_ESDropout_BiDir.png")
