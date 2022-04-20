@@ -24,7 +24,7 @@ class TessDataset(Dataset):
         return self.x[index], self.y[index]
 
 
-def train_lstm(model_output_path):
+def train_lstm(model_output_path, cf_path):
     preprocessor = DataPreprocessor()
     x_train, _, x_test, y_train, _, y_test = preprocessor.mfcc_data_prep("../data")
     train_loader = DataLoader(TessDataset(x_train, y_train), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
@@ -35,8 +35,8 @@ def train_lstm(model_output_path):
     optimizer = optim.Adam(lstm_model.parameters(), lr=Constants.LSTM_LEARNING_RATE)
     lstm_training_phase(lstm_model, train_loader, optimizer, criterion)
     lstm_testing_phase(lstm_model, test_loader, model_output_path)
-    gen_confusion_matrix(lstm_model, train_loader)
+    gen_confusion_matrix(lstm_model, test_loader, cf_path)
 	
 
 if __name__ == '__main__':
-    train_lstm("LSTMModel.pt")
+    train_lstm("./weights/LSTMModel.pt", "./cf/LSTMModel.png")

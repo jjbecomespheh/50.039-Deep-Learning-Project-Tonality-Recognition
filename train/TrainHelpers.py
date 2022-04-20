@@ -48,22 +48,23 @@ def lstm_testing_phase(model, test_loader, model_out_path):
     print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no))
     torch.save(model.state_dict(), model_out_path)
 
-def gen_confusion_matrix(model, test_loader):
+def gen_confusion_matrix(model, test_loader, cf_path):
     print('Generating Confusion Matrix...')
     torch.no_grad()
     model.eval()
     preds, actuals = [], []
 
     for batch in test_loader:
-        batch_no += 1
         mfccs, labels = batch
         mfccs = torch.squeeze(mfccs)
-        for (mfcc, label) in zip(mfccs, labels):
-            out = model(mfcc)
-            prediction = torch.max(out, dim=1)[1].item()
-            preds.append(prediction)
+        outputs = model(mfccs)
+        outputs = outputs.max(dim=1)[1]
+        for (output,label) in zip(outputs, labels):
+            preds.append(output)
             actuals.append(label)
     cf = sklearn.metrics.confusion_matrix(preds, actuals)
     plt.figure(figsize=(16, 5))
     sns.heatmap(cf, cmap='icefire', annot=True, linewidths=0.1, fmt = ',')
     plt.title('Confusion Matrix: LSTM', fontsize=15)
+    plt.savefig(cf_path)
+    print('Confusion Matrix stored in ', cf_path)
