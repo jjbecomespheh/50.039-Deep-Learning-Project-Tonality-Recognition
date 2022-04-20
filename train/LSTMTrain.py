@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import sys
 from os.path import dirname, abspath
+
+from train.TrainHelpers import lstm_testing_phase
 parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
@@ -13,6 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from Preprocessor import DataPreprocessor
 from models.LSTMModel import LSTM
+from TrainHelpers import lstm_training_phase, lstm_testing_phase
 
 class TessDataset(Dataset):
     def __init__(self, x, y):
@@ -39,46 +42,10 @@ def train_lstm():
   test_loader = DataLoader(TessDataset(x_test, y_test), batch_size=Constants.LSTM_BATCH_SIZE, shuffle=True)
   lstm_model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE)
   print('lstm_model: ', lstm_model)
-  train_network(lstm_model, train_loader, test_loader)
-  
-
-def train_network(model, train_loader, test_loader, learning_rate=0.01):
   criterion = nn.CrossEntropyLoss()
-  optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-  print('Training started...')
-  # Train the data multiple times
-  for epoch in range(Constants.LSTM_EPOCHS):
-    train_loss = 0
-    train_acc = 0
-    model.train()
-    batch_no = 0
-    for batch in train_loader:
-      batch_no+=1
-      mfccs, labels = batch
-      mfccs = torch.squeeze(mfccs)
-      out = model(mfccs)
-      optimizer.zero_grad()
-      loss = criterion(out, labels)
-      loss.backward()
-      optimizer.step()
-      train_loss += loss.item()
-      train_acc += get_accuracy(out, labels)
-    print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch+1, Constants.LSTM_EPOCHS, train_loss/batch_no, train_acc/batch_no))
-  print('Testing Started...')
-  test_acc = 0
-  model.eval()
-  batch_no = 0
-
-  for batch in test_loader:
-    batch_no+=1
-    mfccs, labels = batch
-    mfccs = torch.squeeze(mfccs)
-    out = model(mfccs)
-    test_acc += get_accuracy(out, labels)
-      
-  # Print Final Test Accuracy
-  print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no) )
-  torch.save(model.state_dict(), "LSTMModel.pt")
+  optimizer = optim.Adam(lstm_model.parameters(), lr=Constants.LSTM_LEARNING_RATE)
+  lstm_training_phase(lstm_model, train_loader, optimizer, criterion)
+  lstm_testing_phase(lstm_model, test_loader)
 
 if __name__ == '__main__':
     train_lstm()
