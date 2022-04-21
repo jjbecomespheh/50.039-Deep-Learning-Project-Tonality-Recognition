@@ -33,4 +33,4 @@ def train_lstm(model_output_path, cf_path):
     tb.close()
 
 if __name__ == '__main__':
-    train_lstm(f"./weights/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.pt", "./cf/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.png")
+    train_lstm(f"./weights/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.pt", f"./cf/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.png")

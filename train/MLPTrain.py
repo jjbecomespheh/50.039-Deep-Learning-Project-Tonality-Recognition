@@ -33,4 +33,4 @@ def train_lstm(model_output_path, cf_path):
     tb.close()
 
 if __name__ == '__main__':
-    train_lstm(f"./weights/MLP_ES{Constants.MLP_ES_PATIENCE}.pt", "./cf/MLP_ES{Constants.MLP_ES_PATIENCE}.png")
+    train_lstm(f"./weights/MLP_ES{Constants.MLP_ES_PATIENCE}.pt", f"./cf/MLP_ES{Constants.MLP_ES_PATIENCE}.png")

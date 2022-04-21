@@ -98,7 +98,7 @@ def gen_confusion_matrix(model, test_loader, cf_path):
     cf = sklearn.metrics.confusion_matrix(preds, actuals)
     plt.figure(figsize=(16, 5))
     sns.heatmap(cf, cmap='icefire', annot=True, linewidths=0.1, fmt = ',')
-    plt.title('Confusion Matrix: LSTM', fontsize=15)
+    plt.title('Confusion Matrix: Model', fontsize=15)
     plt.savefig(cf_path)
     print('Confusion Matrix stored in ', cf_path)
 
