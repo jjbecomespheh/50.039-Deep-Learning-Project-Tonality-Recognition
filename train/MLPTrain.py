@@ -26,8 +26,9 @@ def train_lstm(model_output_path, cf_path):
     print('mlp_model: ', mlp_model)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(mlp_model.parameters(), lr=Constants.MLP_LEARNING_RATE)
-    mfcc_model_training_phase(mlp_model, train_loader, val_loader, optimizer, criterion, tb) # python has pass by reference so the model gets updated
-    mfcc_model_testing_phase(mlp_model, test_loader, model_output_path)
+    mfcc_model_training_phase(mlp_model, train_loader, val_loader, optimizer, criterion, tb, Constants.MLP_EPOCHS, Constants.MLP_ES_PATIENCE, Constants.MLP_BATCH_SIZE) 
+    # python has pass by reference so the model gets updated
+    mfcc_model_testing_phase(mlp_model, test_loader, model_output_path, Constants.MLP_BATCH_SIZE)
     gen_confusion_matrix(mlp_model, test_loader, cf_path)
     tb.close()
 

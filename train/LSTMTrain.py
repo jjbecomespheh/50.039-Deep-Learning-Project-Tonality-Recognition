@@ -26,8 +26,9 @@ def train_lstm(model_output_path, cf_path):
     print('lstm_model: ', lstm_model)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(lstm_model.parameters(), lr=Constants.LSTM_LEARNING_RATE)
-    mfcc_model_training_phase(lstm_model, train_loader, val_loader, optimizer, criterion, tb) # python has pass by reference so the model gets updated
-    mfcc_model_testing_phase(lstm_model, test_loader, model_output_path)
+    mfcc_model_training_phase(lstm_model, train_loader, val_loader, optimizer, criterion, tb, Constants.LSTM_EPOCHS, Constants.LSTM_ES_PATIENCE, Constants.LSTM_BATCH_SIZE) 
+	# python has pass by reference so the model gets updated
+    mfcc_model_testing_phase(lstm_model, test_loader, model_output_path, Constants.LSTM_BATCH_SIZE)
     gen_confusion_matrix(lstm_model, test_loader, cf_path)
     tb.close()
 

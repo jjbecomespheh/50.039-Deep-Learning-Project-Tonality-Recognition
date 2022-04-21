@@ -16,7 +16,7 @@ def get_accuracy(out, actual_labels, batch_size):
     accuracy = correct/batch_size
     return accuracy
 
-def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience):
+def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience, batch_size):
     print('Training started...')
     last_epoch_val_loss, trigger_count = math.inf, 0
     for epoch in range(epochs):
@@ -33,12 +33,12 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-            train_acc += get_accuracy(out, labels, len(train_loader))
+            train_acc += get_accuracy(out, labels, batch_size)
 
         # Start of Validation check. 
         current_epoch_train_loss, current_epoch_train_acc = train_loss/batch_no, train_acc/batch_no
         print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_train_loss, current_epoch_train_acc ))
-        current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion)
+        current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion, batch_size)
         if current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
             print(f"VALIDATION | Epoch {epoch + 1}/{epochs} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")
@@ -50,7 +50,7 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
 
         lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_val_loss, current_epoch_train_acc, current_epoch_val_acc)
 
-def mfcc_model_validation_phase(model, val_loader, criterion):
+def mfcc_model_validation_phase(model, val_loader, criterion, batch_size):
     val_loss, batch_no, val_acc = 0, 0, 0
     model.eval()
 
@@ -61,11 +61,11 @@ def mfcc_model_validation_phase(model, val_loader, criterion):
         out = model(mfccs)
         loss = criterion(out, labels)
         val_loss += loss.item()
-        val_acc += get_accuracy(out, labels, len(val_loader))
+        val_acc += get_accuracy(out, labels, batch_size)
 
     return val_loss / batch_no, val_acc / batch_no
         
-def mfcc_model_testing_phase(model, test_loader, model_out_path):
+def mfcc_model_testing_phase(model, test_loader, model_out_path, batch_size):
     print('Testing Started...')
     test_acc, batch_no = 0, 0
     model.eval()
@@ -75,7 +75,7 @@ def mfcc_model_testing_phase(model, test_loader, model_out_path):
         mfccs, labels = batch
         mfccs = torch.squeeze(mfccs)
         out = model(mfccs)
-        test_acc += get_accuracy(out, labels, len(test_loader))
+        test_acc += get_accuracy(out, labels, batch_size)
 
     print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no))
     torch.save(model.state_dict(), model_out_path)
