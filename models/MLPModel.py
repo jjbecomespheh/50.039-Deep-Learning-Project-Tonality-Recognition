@@ -15,6 +15,7 @@ class MLP(nn.Module):
 
     def forward(self, input):
         batch_size = input.shape[0] # (batch_size, height, width)
+        input = input[:, :, :1]
         input = input.view(batch_size, -1) # (batch_size, height * width)
         hidden_1 = F.relu(self.input_fc(input))
         hidden_2 = F.relu(self.hidden_fc(hidden_1))

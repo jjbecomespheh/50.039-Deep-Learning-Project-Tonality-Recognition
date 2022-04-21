@@ -39,6 +39,7 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
         current_epoch_train_loss, current_epoch_train_acc = train_loss/batch_no, train_acc/batch_no
         print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_train_loss, current_epoch_train_acc ))
         current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion, batch_size)
+        print('VALIDATION | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_val_loss, current_epoch_val_acc ))
         if current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
             print(f"VALIDATION | Epoch {epoch + 1}/{epochs} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")

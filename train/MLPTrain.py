@@ -11,7 +11,7 @@ sys.path.append(parent_dir_path)
 
 import Constants
 from Preprocessor import DataPreprocessor
-from LSTMTrainHelpers import mfcc_model_training_phase, mfcc_model_testing_phase, gen_confusion_matrix
+from TrainHelpers import mfcc_model_training_phase, mfcc_model_testing_phase, gen_confusion_matrix
 from models.MLPModel import MLP
 from Dataset import TessDataset
 
