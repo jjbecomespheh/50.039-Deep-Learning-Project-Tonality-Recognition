@@ -33,4 +33,4 @@ def train_lstm(model_output_path, cf_path):
     tb.close()
 
 if __name__ == '__main__':
-    train_lstm("./weights/LSTMModel_ESDropout_BiDir.pt", "./cf/LSTMModel_ESDropout_BiDir.png")
+    train_lstm(f"./weights/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.pt", "./cf/LSTM_ES{Constants.LSTM_EPOCHS}_D05_Bi.png")
