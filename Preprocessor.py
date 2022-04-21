@@ -5,7 +5,7 @@ import pandas as pd
 import librosa
 from scipy import signal
 from scipy.io import wavfile
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
@@ -31,11 +31,7 @@ class DataPreprocessor:
         out = np.zeros(out_shape, dtype=np.float32)
         out[:, 0] = mean
         return out # array of shape (no of MFCCs, no of MFCCs)
-
-    def extract_spectrogram(self, file_path):
-        sampling_rate, samples = wavfile.read(file_path)
-        _, _, spectrogram = signal.spectrogram(samples, sampling_rate) # The first 2 are arrays of frequencies and segment times respectively
-        return spectrogram # nd array.  By default, the last axis of spectrogram corresponds to the segment times.
+        # return np.mean(mfcc, axis=1) #x array of shape (no of MFCCs, 1)
 
     def extract_mfccs(self, file_paths):
         mfccs = list()
@@ -71,3 +67,47 @@ class DataPreprocessor:
         le_classes, _ = self.convert_labels_to_LE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, le_classes)
         return x_train, x_val, x_test, y_train, y_val, y_test
+    
+    def extract_audio_signals(self,file_paths,sample_rate=Constants.CNN_SAMPLING_RATE):
+        audio_signals = []
+        for i, file_path in enumerate(file_paths):
+            audio, sample_rate = librosa.load(file_path, duration=3, offset=0.5, sr=sample_rate)
+            audio_signal = np.zeros((int(sample_rate*3,)))
+            audio_signal[:len(audio)] = audio
+
+            audio_signals.append(audio_signal)
+            print("\r Processed {}/{} files".format(i,len(file_paths)),end='')
+        audio_signals = np.stack(audio_signals,axis=0)
+        return audio_signals
+    
+    def extract_mel_spectrogram(self, audio, sample_rate=Constants.CNN_SAMPLING_RATE, n_fft=1024, win_length=512, window='hamming', hop_length=256, n_mels=128):
+        mel_spectrogram = librosa.feature.melspectrogram(y=audio,
+                                        sr=sample_rate,
+                                        n_fft=n_fft,
+                                        win_length = win_length,
+                                        window=window,
+                                        hop_length = hop_length,
+                                        n_mels=n_mels,
+                                        fmax=sample_rate/2
+                                      )
+        # Convert to decibel scale
+        mel_spectrogram_dB = librosa.power_to_db(mel_spectrogram, ref=np.max)
+        return mel_spectrogram_dB
+    
+    def extract_mel_spectrograms(self, audio_files, sample_rate=Constants.CNN_SAMPLING_RATE):
+        mel_spectograms = []
+        for i, audio_file in enumerate(audio_files):
+            mel_spectrogram = self.extract_mel_spectrogram(audio_file,sample_rate)
+            mel_spectograms.append(mel_spectrogram)
+            print("\r Processed {}/{} files".format(i,len(audio_files)),end='')
+        mel_spectrograms = np.stack(mel_spectograms, axis=0)
+        return mel_spectrograms
+    
+    def reshape_scale_data(self, data):
+        data = np.expand_dims(data,1)
+        scaler = StandardScaler()
+        d1,d2,d3,d4 = data.shape
+        data = np.reshape(data, newshape=(d1,-1))
+        data = scaler.fit_transform(data)
+        data = np.reshape(data, newshape=(d1,d2,d3,d4))
+        return data
