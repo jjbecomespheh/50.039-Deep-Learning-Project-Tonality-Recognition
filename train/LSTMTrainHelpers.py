@@ -7,20 +7,19 @@ import torch
 import sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
-import Constants
 import math
 import numpy as np
 
-def get_accuracy(out, actual_labels):
+def get_accuracy(out, actual_labels, batch_size):
     predictions = out.max(dim=1)[1]
     correct = (predictions == actual_labels).sum().item()
-    accuracy = correct/Constants.LSTM_BATCH_SIZE
+    accuracy = correct/batch_size
     return accuracy
 
-def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion, tb):
+def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience):
     print('Training started...')
     last_epoch_val_loss, trigger_count = math.inf, 0
-    for epoch in range(Constants.LSTM_EPOCHS):
+    for epoch in range(epochs):
         train_loss, train_acc, batch_no = 0, 0, 0
         model.train()
         for batch in train_loader:
@@ -34,24 +33,24 @@ def lstm_training_phase(model, train_loader, val_loader, optimizer, criterion, t
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-            train_acc += get_accuracy(out, labels)
+            train_acc += get_accuracy(out, labels, len(train_loader))
 
         # Start of Validation check. 
         current_epoch_train_loss, current_epoch_train_acc = train_loss/batch_no, train_acc/batch_no
-        print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, Constants.LSTM_EPOCHS, current_epoch_train_loss, current_epoch_train_acc ))
-        current_epoch_val_loss, current_epoch_val_acc = lstm_validation_phase(model, val_loader, criterion)
+        print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_train_loss, current_epoch_train_acc ))
+        current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion)
         if current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
-            print(f"VALIDATION | Epoch {epoch + 1}/{Constants.LSTM_EPOCHS} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")
-            if trigger_count >= Constants.LSTM_ES_PATIENCE: 
-                print(f"VALIDATION | Epoch {epoch + 1}/{Constants.LSTM_EPOCHS} | Early Stopping Here")
+            print(f"VALIDATION | Epoch {epoch + 1}/{epochs} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")
+            if trigger_count >= patience: 
+                print(f"VALIDATION | Epoch {epoch + 1}/{epochs} | Early Stopping Here")
                 return
         else: trigger_count = 0
         last_epoch_val_loss = current_epoch_val_loss
 
         lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_val_loss, current_epoch_train_acc, current_epoch_val_acc)
 
-def lstm_validation_phase(model, val_loader, criterion):
+def mfcc_model_validation_phase(model, val_loader, criterion):
     val_loss, batch_no, val_acc = 0, 0, 0
     model.eval()
 
@@ -62,11 +61,11 @@ def lstm_validation_phase(model, val_loader, criterion):
         out = model(mfccs)
         loss = criterion(out, labels)
         val_loss += loss.item()
-        val_acc += get_accuracy(out, labels)
+        val_acc += get_accuracy(out, labels, len(val_loader))
 
     return val_loss / batch_no, val_acc / batch_no
         
-def lstm_testing_phase(model, test_loader, model_out_path):
+def mfcc_model_testing_phase(model, test_loader, model_out_path):
     print('Testing Started...')
     test_acc, batch_no = 0, 0
     model.eval()
@@ -76,7 +75,7 @@ def lstm_testing_phase(model, test_loader, model_out_path):
         mfccs, labels = batch
         mfccs = torch.squeeze(mfccs)
         out = model(mfccs)
-        test_acc += get_accuracy(out, labels)
+        test_acc += get_accuracy(out, labels, len(test_loader))
 
     print('TEST | Average Accuracy per {} Loaders: {:.5f}'.format(batch_no, test_acc/batch_no))
     torch.save(model.state_dict(), model_out_path)
