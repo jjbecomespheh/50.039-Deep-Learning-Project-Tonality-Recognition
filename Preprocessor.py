@@ -62,52 +62,20 @@ class DataPreprocessor:
         return x_train, x_val, x_test, y_train, y_val, y_test
 
     def mfcc_data_prep(self, data_dir): # combines the above functions for
-        file_paths, labels = self.get_file_paths_and_labels(data_dir)
+        file_paths, labels = self.get_file_paths_and_labels_crass(data_dir)
         mfccs = self.extract_mfccs(file_paths)
         le_classes, _ = self.convert_labels_to_LE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, le_classes)
         return x_train, x_val, x_test, y_train, y_val, y_test
-    
-    def extract_audio_signals(self,file_paths,sample_rate=Constants.CNN_SAMPLING_RATE):
-        audio_signals = []
-        for i, file_path in enumerate(file_paths):
-            audio, sample_rate = librosa.load(file_path, duration=3, offset=0.5, sr=sample_rate)
-            audio_signal = np.zeros((int(sample_rate*3,)))
-            audio_signal[:len(audio)] = audio
 
-            audio_signals.append(audio_signal)
-            print("\r Processed {}/{} files".format(i,len(file_paths)),end='')
-        audio_signals = np.stack(audio_signals,axis=0)
-        return audio_signals
-    
-    def extract_mel_spectrogram(self, audio, sample_rate=Constants.CNN_SAMPLING_RATE, n_fft=1024, win_length=512, window='hamming', hop_length=256, n_mels=128):
-        mel_spectrogram = librosa.feature.melspectrogram(y=audio,
-                                        sr=sample_rate,
-                                        n_fft=n_fft,
-                                        win_length = win_length,
-                                        window=window,
-                                        hop_length = hop_length,
-                                        n_mels=n_mels,
-                                        fmax=sample_rate/2
-                                      )
-        # Convert to decibel scale
-        mel_spectrogram_dB = librosa.power_to_db(mel_spectrogram, ref=np.max)
-        return mel_spectrogram_dB
-    
-    def extract_mel_spectrograms(self, audio_files, sample_rate=Constants.CNN_SAMPLING_RATE):
-        mel_spectograms = []
-        for i, audio_file in enumerate(audio_files):
-            mel_spectrogram = self.extract_mel_spectrogram(audio_file,sample_rate)
-            mel_spectograms.append(mel_spectrogram)
-            print("\r Processed {}/{} files".format(i,len(audio_files)),end='')
-        mel_spectrograms = np.stack(mel_spectograms, axis=0)
-        return mel_spectrograms
-    
-    def reshape_scale_data(self, data):
-        data = np.expand_dims(data,1)
-        scaler = StandardScaler()
-        d1,d2,d3,d4 = data.shape
-        data = np.reshape(data, newshape=(d1,-1))
-        data = scaler.fit_transform(data)
-        data = np.reshape(data, newshape=(d1,d2,d3,d4))
-        return data
+    def get_file_paths_and_labels_crass(self, data_dir):
+        file_paths, labels = list(), list()
+        for dir_path, _, file_names in os.walk(data_dir):
+            for file_name in file_names:
+                if not file_name.endswith(".wav"): 
+                    continue
+                file_path = os.path.join(dir_path, file_name)
+                file_paths.append(file_path)
+                label = dir_path.split("/")[-1]
+                labels.append(label)
+        return file_paths, labels 
