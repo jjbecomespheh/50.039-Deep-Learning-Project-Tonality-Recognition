@@ -23,6 +23,11 @@ def get_accuracy(out, actual_labels, batch_size):
 def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience, batch_size, early_stopping = True):
     print('Training started...')
     last_epoch_val_loss, trigger_count = math.inf, 0
+    train_loss_arr = []
+    train_acc_arr = []
+    val_loss_arr = []
+    val_acc_arr = []
+
     for epoch in range(epochs):
         train_loss, train_acc, batch_no = 0, 0, 0
         model.train()
@@ -42,8 +47,13 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
 
         # Start of Validation check. 
         current_epoch_train_loss, current_epoch_train_acc = train_loss/batch_no, train_acc/batch_no
+        train_loss_arr.append(current_epoch_train_loss)
+        train_acc_arr.append(current_epoch_train_acc)
+
         print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_train_loss, current_epoch_train_acc ))
         current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion, batch_size)
+        val_loss_arr.append(current_epoch_val_loss)
+        val_acc_arr.append(current_epoch_val_acc)
         print('VALIDATION | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_val_loss, current_epoch_val_acc ))
         if early_stopping and current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
@@ -55,6 +65,7 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
         last_epoch_val_loss = current_epoch_val_loss
 
         lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_val_loss, current_epoch_train_acc, current_epoch_val_acc)
+    return train_loss_arr, train_acc_arr, val_loss_arr, val_acc_arr
 
 def mfcc_model_validation_phase(model, val_loader, criterion, batch_size):
     val_loss, batch_no, val_acc = 0, 0, 0
