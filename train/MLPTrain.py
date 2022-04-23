@@ -1,4 +1,5 @@
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -17,11 +18,13 @@ from Dataset import TessDataset
 
 def train_lstm(model_output_path, cf_path): 
     preprocessor = DataPreprocessor()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     x_train, x_val, x_test, y_train, y_val, y_test = preprocessor.mfcc_data_prep("../data")
     train_loader = DataLoader(TessDataset(x_train, y_train), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(TessDataset(x_test, y_test), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TessDataset(x_val, y_val), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
     mlp_model = MLP(Constants.MLP_INPUT_SIZE, Constants.MLP_HIDDEN_SIZE_1, Constants.MLP_HIDDEN_SIZE_2, Constants.MLP_OUTPUT_SIZE)
+    mlp_model.to(device)
     tb = SummaryWriter()
     print('mlp_model: ', mlp_model)
     criterion = nn.CrossEntropyLoss()
