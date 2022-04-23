@@ -1,5 +1,6 @@
 import sys
 from os.path import dirname, abspath
+import os
 parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 import numpy as np
+from Preprocessor import DataPreprocessor
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -18,7 +20,7 @@ def get_accuracy(out, actual_labels, batch_size):
     accuracy = correct/batch_size
     return accuracy
 
-def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience, batch_size):
+def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criterion, tb, epochs, patience, batch_size, early_stopping = True):
     print('Training started...')
     last_epoch_val_loss, trigger_count = math.inf, 0
     for epoch in range(epochs):
@@ -43,7 +45,7 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
         print('TRAIN | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_train_loss, current_epoch_train_acc ))
         current_epoch_val_loss, current_epoch_val_acc = mfcc_model_validation_phase(model, val_loader, criterion, batch_size)
         print('VALIDATION | Epoch: {}/{} | Loss: {:.2f} | Accuracy: {:.2f}'.format(epoch + 1, epochs, current_epoch_val_loss, current_epoch_val_acc ))
-        if current_epoch_val_loss > last_epoch_val_loss: 
+        if early_stopping and current_epoch_val_loss > last_epoch_val_loss: 
             trigger_count += 1
             print(f"VALIDATION | Epoch {epoch + 1}/{epochs} | Current Loss: {np.round(current_epoch_val_loss, 2)} > Last Loss:  {np.round(last_epoch_val_loss, 2)} | Trigger Count: {trigger_count}")
             if trigger_count >= patience: 
@@ -116,3 +118,24 @@ def lstm_tensorboard(tb, model, epoch, current_epoch_train_loss, current_epoch_v
     for name, weight in model.named_parameters():
         tb.add_histogram(name, weight, epoch)
         tb.add_histogram(f"{name}.grad", weight.grad, epoch)
+
+def data_prep(dir_path):
+    files = os.listdir()
+    if ('x_train.npy' in files) and ('x_test.npy' in files) and ('x_val.npy' in files)\
+    and ('y_train.npy' in files) and ('y_test.npy' in files) and ('y_val.npy' in files):
+        with open('x_train.npy', 'rb') as f:
+            x_train = np.load(f)
+        with open('x_val.npy', 'rb') as f:
+            x_val = np.load(f)
+        with open('x_test.npy', 'rb') as f:
+            x_test = np.load(f)
+        with open('y_train.npy', 'rb') as f:
+            y_train = np.load(f)
+        with open('y_val.npy', 'rb') as f:
+            y_val = np.load(f)
+        with open('y_test.npy', 'rb') as f:
+            y_test = np.load(f)
+    else:
+        preprocessor = DataPreprocessor()
+        x_train, x_val, x_test, y_train, y_val, y_test = preprocessor.mfcc_data_prep(dir_path)
+    return x_train, x_val, x_test, y_train, y_val, y_test

@@ -11,15 +11,13 @@ parent_dir_path = dirname(dirname(abspath(__file__)))
 sys.path.append(parent_dir_path)
 
 import Constants
-from Preprocessor import DataPreprocessor
-from TrainHelpers import mfcc_model_training_phase, mfcc_model_testing_phase, gen_confusion_matrix
+from TrainHelpers import mfcc_model_training_phase, mfcc_model_testing_phase, gen_confusion_matrix, data_prep
 from models.MLPModel import MLP
 from Dataset import TessDataset
 
 def train_lstm(model_output_path, cf_path): 
-    preprocessor = DataPreprocessor()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    x_train, x_val, x_test, y_train, y_val, y_test = preprocessor.mfcc_data_prep("../data")
+    x_train, x_val, x_test, y_train, y_val, y_test = data_prep("../data")
     train_loader = DataLoader(TessDataset(x_train, y_train), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(TessDataset(x_test, y_test), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TessDataset(x_val, y_val), batch_size=Constants.MLP_BATCH_SIZE, shuffle=True)
