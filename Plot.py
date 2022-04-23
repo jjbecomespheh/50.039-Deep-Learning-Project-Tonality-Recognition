@@ -1,4 +1,3 @@
-from cv2 import FileStorage_NAME_EXPECTED
 import matplotlib.pyplot as plt
 import numpy as np
 import time
