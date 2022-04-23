@@ -63,6 +63,7 @@ class DataPreprocessor:
 
     def mfcc_data_prep(self, data_dir): # combines the above functions for
         file_paths, labels = self.get_file_paths_and_labels(data_dir)
+        # file_paths, labels = file_paths[:36], labels[:36]
         mfccs = self.extract_mfccs(file_paths)
         le_classes, _ = self.convert_labels_to_LE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, le_classes)
