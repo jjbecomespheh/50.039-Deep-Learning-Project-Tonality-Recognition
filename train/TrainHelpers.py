@@ -10,6 +10,8 @@ import seaborn as sns
 import math
 import numpy as np
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def get_accuracy(out, actual_labels, batch_size):
     predictions = out.max(dim=1)[1]
     correct = (predictions == actual_labels).sum().item()
@@ -25,6 +27,7 @@ def mfcc_model_training_phase(model, train_loader, val_loader, optimizer, criter
         for batch in train_loader:
             batch_no += 1
             mfccs, labels = batch
+            mfccs, labels = mfccs.to(device), labels.to(device)
             mfccs = torch.squeeze(mfccs)
             if epoch == 0 and batch_no == 0: tb.add_graph(model, mfccs)
             out = model(mfccs)
@@ -58,6 +61,7 @@ def mfcc_model_validation_phase(model, val_loader, criterion, batch_size):
     for batch in val_loader:
         batch_no += 1
         mfccs, labels = batch
+        mfccs, labels = mfccs.to(device), labels.to(device)
         mfccs = torch.squeeze(mfccs)
         out = model(mfccs)
         loss = criterion(out, labels)
@@ -74,6 +78,7 @@ def mfcc_model_testing_phase(model, test_loader, model_out_path, batch_size):
     for batch in test_loader:
         batch_no += 1
         mfccs, labels = batch
+        mfccs, labels = mfccs.to(device), labels.to(device)
         mfccs = torch.squeeze(mfccs)
         out = model(mfccs)
         test_acc += get_accuracy(out, labels, batch_size)
@@ -88,6 +93,7 @@ def gen_confusion_matrix(model, test_loader, cf_path):
     preds, actuals = [], []
 
     for batch in test_loader:
+        mfccs, labels = mfccs.to(device), labels.to(device)
         mfccs, labels = batch
         mfccs = torch.squeeze(mfccs)
         outputs = model(mfccs)

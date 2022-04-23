@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -8,6 +9,7 @@ class MLP(nn.Module):
         self.hidden_size_1 = hidden_size_1 # number of hidden neurons 1
         self.hidden_size_2 = hidden_size_2 # number of hidden neurons 2
         self.output_size = output_size # number of output classes
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.input_fc = nn.Linear(input_size, hidden_size_1)
         self.hidden_fc = nn.Linear(hidden_size_1, hidden_size_2)
