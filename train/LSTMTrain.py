@@ -41,4 +41,3 @@ if __name__ == '__main__':
     for dropout in Constants.EXPT_DROPOUTS:
         train_lstm(f"./weights/LSTM_ES_LR{0.001}_D{dropout}.pt", f"./cf/LSTM_ES_LR{0.001}_D{dropout}.png", dropout, 0.001, True, False)
     train_lstm(f"./weights/LSTM_ES_LR{0.001}_D{0.5}_Bi.pt", f"./cf/LSTM_ES_LR{0.001}_D{0.5}.png", 0.5, 0.001, True, True)
-    

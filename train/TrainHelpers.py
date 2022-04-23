@@ -95,14 +95,14 @@ def gen_confusion_matrix(model, test_loader, cf_path):
     preds, actuals = [], []
 
     for batch in test_loader:
-        mfccs, labels = mfccs.to(device), labels.to(device)
         mfccs, labels = batch
+        mfccs, labels = mfccs.to(device), labels.to(device)
         mfccs = torch.squeeze(mfccs)
         outputs = model(mfccs)
         outputs = outputs.max(dim=1)[1]
         for (output,label) in zip(outputs, labels):
-            preds.append(output)
-            actuals.append(label)
+            preds.append(output.cpu())
+            actuals.append(label.cpu())
     cf = sklearn.metrics.confusion_matrix(preds, actuals)
     plt.figure(figsize=(16, 5))
     sns.heatmap(cf, cmap='icefire', annot=True, linewidths=0.1, fmt = ',')
