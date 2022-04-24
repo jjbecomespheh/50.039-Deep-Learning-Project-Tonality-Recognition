@@ -23,7 +23,7 @@ from train.MelTrainHelper import TrainHelper
 from Preprocessor import *
 import Constants
 
-def infer(model, path, all_mel_specs):
+def infer(model, path, all_mel_specs, device='cpu'):
     EMOTIONS= {0:'neutral',1:'happy', 2:'sad', 3:'angry', 4:'fear', 5:'disgust', 6:'ps'}
     n=len(path)
     train_helper = TrainHelper()
@@ -46,8 +46,8 @@ def infer(model, path, all_mel_specs):
         X_test = preprocessor.reshape_scale_data(mel_specs)
         X_test = X_test[:len(path)]
     Y_test = [1]*n
-    X_test_tensor = torch.tensor(X_test,device='cpu').float()
-    Y_test_tensor = torch.tensor(Y_test,dtype=torch.long,device='cpu')
+    X_test_tensor = torch.tensor(X_test,device=device).float()
+    Y_test_tensor = torch.tensor(Y_test,dtype=torch.long,device=device)
     test_loss, test_acc, predictions, output_softmax = train_helper.validate_top3(X_test_tensor,Y_test_tensor,model)
     
     if len(predictions.tolist()) == 1:

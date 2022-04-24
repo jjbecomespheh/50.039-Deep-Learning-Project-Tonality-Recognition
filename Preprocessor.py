@@ -68,3 +68,47 @@ class DataPreprocessor:
         le_classes, _ = self.convert_labels_to_LE(labels)
         x_train, x_val, x_test, y_train, y_val, y_test = self.train_val_test_split(mfccs, le_classes)
         return x_train, x_val, x_test, y_train, y_val, y_test
+    
+    def extract_audio_signals(self,file_paths,sample_rate=Constants.CNN_SAMPLING_RATE):
+        audio_signals = []
+        for i, file_path in enumerate(file_paths):
+            audio, sample_rate = librosa.load(file_path, duration=3, offset=0.5, sr=sample_rate)
+            audio_signal = np.zeros((int(sample_rate*3,)))
+            audio_signal[:len(audio)] = audio
+
+            audio_signals.append(audio_signal)
+            print("\r extract_audio_signals: Processed {}/{} files".format(i,len(file_paths)),end='')
+        audio_signals = np.stack(audio_signals,axis=0)
+        return audio_signals
+    
+    def extract_mel_spectogram(self, audio, sample_rate=Constants.CNN_SAMPLING_RATE, n_fft=1024, win_length=512, window='hamming', hop_length=256, n_mels=128):
+        mel_spectogram = librosa.feature.melspectrogram(y=audio,
+                                        sr=sample_rate,
+                                        n_fft=n_fft,
+                                        win_length = win_length,
+                                        window=window,
+                                        hop_length = hop_length,
+                                        n_mels=n_mels,
+                                        fmax=sample_rate/2
+                                      )
+        # Convert to decibel scale
+        mel_spectogram_dB = librosa.power_to_db(mel_spectogram, ref=np.max)
+        return mel_spectogram_dB
+    
+    def extract_mel_spectograms(self, audio_files, sample_rate=Constants.CNN_SAMPLING_RATE):
+        mel_spectograms = []
+        for i, audio_file in enumerate(audio_files):
+            mel_spectrogram = self.extract_mel_spectogram(audio_file,sample_rate)
+            mel_spectograms.append(mel_spectrogram)
+            print("\r extract_mel_spectograms: Processed {}/{} files".format(i,len(audio_files)),end='')
+        mel_spectograms = np.stack(mel_spectograms, axis=0)
+        return mel_spectograms
+    
+    def reshape_scale_data(self, data):
+        data = np.expand_dims(data,1)
+        scaler = StandardScaler()
+        d1,d2,d3,d4 = data.shape
+        data = np.reshape(data, newshape=(d1,-1))
+        data = scaler.fit_transform(data)
+        data = np.reshape(data, newshape=(d1,d2,d3,d4))
+        return data
