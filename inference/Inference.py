@@ -11,12 +11,13 @@ from models.LSTMModel import LSTM
 from models.MLPModel import MLP
 from Preprocessor import DataPreprocessor
 
-def mfccs_infer(model_name, model_weights_path, wav_file_paths):
+def mfccs_infer(model_name, model_weights_path, wav_file_paths, dropout =0.4, bidirectional = False):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if model_name == 'lstm':
-        model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE, Constants.LSTM_DROPOUT)
+        model = LSTM(Constants.LSTM_INPUT_SIZE, Constants.LSTM_HIDDEN_SIZE, Constants.LSTM_LAYER_SIZE, Constants.LSTM_OUTPUT_SIZE, dropout, bidirectional)
     if model_name == 'mlp':
         model = MLP(Constants.MLP_INPUT_SIZE, Constants.MLP_HIDDEN_SIZE_1, Constants.MLP_HIDDEN_SIZE_2, Constants.MLP_OUTPUT_SIZE)
-    model.load_state_dict(torch.load(model_weights_path))
+    model.load_state_dict(torch.load(model_weights_path, map_location=device))
     model.eval()
 
     mfccs = DataPreprocessor().extract_mfccs(wav_file_paths)
@@ -28,13 +29,15 @@ def mfccs_infer(model_name, model_weights_path, wav_file_paths):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--Model", help="Model type used for inference --> either lstm or mlp")
-    parser.add_argument("-w", "--Weights", help="Weights used for inference --> enter a valid path")
+    parser.add_argument("-m", "--Model", help="Model type used for inference --> either lstm or mlp", type=str, required=True)
+    parser.add_argument("-w", "--Weights", help="Weights used for inference --> enter a valid path", type=str, required=True)
+    parser.add_argument("-d", "--Dropout", help="Dropout of the model used for inference", type=float, required=False)
+    parser.add_argument("-b", "--Bidirectional", help="Bidircetional attribute of the model used for inference", type=bool, required=False)
     args = parser.parse_args()
 
-    if args.Model != 'lstm' or args.Model != "mlp":
+    if not (args.Model == 'lstm' or args.Model == "mlp"):
         print("Please enter a valid model type --> Options are either 'lstm' or 'mlp'")
-    elif  os.path.exists(args.Weights):
+    elif not os.path.exists(args.Weights):
         print("Please enter a valid path for the weights of the model")
     else:
         test_data_dir = "./TestData"
