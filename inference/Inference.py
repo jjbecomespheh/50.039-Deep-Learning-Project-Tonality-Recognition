@@ -11,6 +11,7 @@ from models.LSTMModel import LSTM
 from models.MLPModel import MLP
 from Preprocessor import DataPreprocessor
 
+
 def mfccs_infer(model_name, model_weights_path, wav_file_paths, dropout =0.4, bidirectional = False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if model_name == 'lstm':
