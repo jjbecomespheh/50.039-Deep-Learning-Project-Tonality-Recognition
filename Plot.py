@@ -43,5 +43,5 @@ if __name__ == "__main__":
     train = np.genfromtxt('csv/dummy01.csv', delimiter=',')
     val = np.genfromtxt('csv/dummy02.csv', delimiter=',')
 
-    filename = 'LSTM_01'
-    generate_plot(train, val, filename, typ='acc', model='LSTM')
+    filename = 'LSTM_02'
+    generate_plot(train, val, filename, typ='loss', model='LSTM')
