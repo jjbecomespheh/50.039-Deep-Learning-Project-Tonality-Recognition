@@ -53,8 +53,13 @@ def infer(model, path, all_mel_specs, device='cpu'):
     if len(predictions.tolist()) == 1:
         ground_truth = path.split("_")[-1].split(".")[-2]
         top3_prob, top3 = torch.topk(output_softmax, 3)
-        top3 = top3.detach().numpy()
-        top3_prob = top3_prob.detach().numpy()
+        if device == 'cpu':
+            top3 = top3.detach().numpy()
+            top3_prob = top3_prob.detach().numpy()
+        else:
+            top3 = top3.cpu().detach().numpy()
+            top3_prob = top3_prob.cpu().detach().numpy()
+            
         print("Audio File: ", path)
         print("Predicted Emotions: ",EMOTIONS[top3[0,0]], "\t| Ground Truth: ", ground_truth)
         print("Top 1: ", EMOTIONS[top3[0,0]], "Prob: ", round(top3_prob[0,0]*100, 3),"%", "\t| Top 2: ", EMOTIONS[top3[0,1]], "Prob: ", round(top3_prob[0,1]*100, 3),"%", "\t| Top 3: ", EMOTIONS[top3[0,2]], "Prob: ", round(top3_prob[0,2]*100, 3),"%")
@@ -65,8 +70,12 @@ def infer(model, path, all_mel_specs, device='cpu'):
             ground_truth = file_name.split("_")[-1].split(".")[-2]
             
             top3_prob, top3 = torch.topk(output_softmax[i], 3)
-            top3 = top3.detach().numpy()
-            top3_prob = top3_prob.detach().numpy()
+            if device == 'cpu':
+                top3 = top3.detach().numpy()
+                top3_prob = top3_prob.detach().numpy()
+            else:
+                top3 = top3.cpu().detach().numpy()
+                top3_prob = top3_prob.cpu().detach().numpy()
             i += 1
             print("Audio File: ", file_name)
             print("Predicted Emotions: ",EMOTIONS[top3[0]], "\t| Ground Truth: ", ground_truth)
